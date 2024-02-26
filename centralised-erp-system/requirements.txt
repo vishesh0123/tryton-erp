@@ -4,6 +4,7 @@ lxml==5.1.0
 MarkupSafe==2.1.5
 passlib==1.7.4
 polib==1.2.0
+proteus==7.0.1
 psycopg2==2.9.9
 pycairo==1.26.0
 PyGObject==3.46.0
