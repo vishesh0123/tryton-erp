@@ -4,9 +4,6 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import psycopg2
 from dbconf import DB_NAME, DB_USER, DB_PASS, DB_HOST, DB_PORT
-from datetime import datetime
-
-current_timestamp = datetime.now()
 
 
 def connect_db():
@@ -23,8 +20,30 @@ def get_db_size_bytes(connection):
     cursor.close()
     return size_bytes
 
+def get_current_db_timestamp(connection):
+    cursor = connection.cursor()
+    cursor.execute("SELECT CURRENT_TIMESTAMP;")
+    current_db_timestamp = cursor.fetchone()[0]
+    cursor.close()
+    return current_db_timestamp
+
+    
+def reset_statistics(connection):
+    try:
+        cursor = connection.cursor()
+        cursor.execute("SELECT pg_stat_reset();")
+        connection.commit()
+        cursor.close()
+        print("Statistics reset successfully.")
+    except Exception as e:
+        print(f"Error resetting statistics: {e}")
+
 
 db_conn = connect_db()
+reset_statistics(db_conn)
+current_timestamp = get_current_db_timestamp(db_conn)
+print("stats_reset_time: ", current_timestamp)
+print("current_timestamp: ", get_current_db_timestamp(db_conn))
 if db_conn:
     db_size_bytes = get_db_size_bytes(db_conn)
     db_conn.close()
@@ -125,8 +144,6 @@ def get_transaction_metrics():
         with psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST, port=DB_PORT) as conn:
             with conn.cursor() as cur:
                 
-                
-
                 cur.execute(
                     """
                 SELECT 
