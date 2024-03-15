@@ -4,6 +4,9 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import psycopg2
 from dbconf import DB_NAME, DB_USER, DB_PASS, DB_HOST, DB_PORT
+from datetime import datetime
+
+current_timestamp = datetime.now()
 
 
 def connect_db():
@@ -12,7 +15,6 @@ def connect_db():
     except Exception as e:
         print(f"Error connecting to the database: {e}")
         return None
-
 
 def get_db_size_bytes(connection):
     cursor = connection.cursor()
@@ -122,21 +124,25 @@ def get_transaction_metrics():
     try:
         with psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST, port=DB_PORT) as conn:
             with conn.cursor() as cur:
+                
+                
+
                 cur.execute(
                     """
                 SELECT 
                   datname, 
                   xact_commit + xact_rollback AS total_transactions, 
-                  (xact_commit + xact_rollback) / (extract(epoch from now() - stats_reset) / 60) AS transactions_per_minute,
-                  (xact_commit + xact_rollback) / extract(epoch from now() - stats_reset) AS transactions_per_second
+                  (xact_commit + xact_rollback) / (extract(epoch from now() - %s) / 60) AS transactions_per_minute,
+                  (xact_commit + xact_rollback) / extract(epoch from now() - %s) AS transactions_per_second
                 FROM 
                   pg_stat_database
                 WHERE
                   datname = 'trytonnew';
-                """
+                """,(current_timestamp, current_timestamp)
                 )
                 result = cur.fetchone()
-                return {"total_transactions": result[3], "transactions_per_minute": result[2]}
+                print(result)
+                return {"total_transactions": abs(result[3]), "transactions_per_minute": abs(result[2])}
     except Exception as e:
         print(f"Error fetching transaction metrics: {e}")
         return {"total_transactions": 0, "transactions_per_minute": 0}
@@ -237,6 +243,11 @@ def refresh_transaction_metrics():
     metrics = get_transaction_metrics()
     total_transactions = metrics["total_transactions"]
     tpm = metrics["transactions_per_minute"]
+    
+    if tpm is None:
+       tpm = 0
+    if total_transactions is None:
+       total_transactions = 0 
 
     # Assuming you have placeholders for these metrics in your GUI
     # Update the placeholders with the latest metrics
@@ -270,7 +281,6 @@ def refresh_transaction_metrics():
     # Schedule the next call
     root.after(3000, refresh_transaction_metrics)
     print("Transaction metrics refreshed!")
-
 
 refresh_db_size_metrics()
 refresh_transaction_metrics()
