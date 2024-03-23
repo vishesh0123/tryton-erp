@@ -13,8 +13,19 @@ def connect_db():
     except Exception as e:
         print(f"Error connecting to the database: {e}")
         return None
+    
+def reset_statistics(connection):
+    try:
+        cursor = connection.cursor()
+        cursor.execute("DELETE FROM db_metrics_tryton;")
+        connection.commit()
+        cursor.close()
+        print("Statistics reset successfully.")
+    except Exception as e:
+        print(f"Error resetting statistics: {e}")
 
 conn = connect_db()
+reset_statistics(conn)
 def insert_data_into_table(transaction_status, time_duration):
     try:
         cursor = conn.cursor()
