@@ -203,8 +203,30 @@ plot11.pie(
 plot11.set_title("Data to Errors Ratio (decentralized)")
 add_figure_to_frame(fig11, top_frame1)
 
-add_figure_to_frame(fig1, top_frame2)
-add_figure_to_frame(fig11, top_frame2)
+fig111 = Figure(figsize=(2, 5), dpi=80)
+plot111 = fig111.add_subplot(1, 1, 1)
+plot111.pie(
+    [100, 0],
+    labels=["Total Data Acquired", "Errors"],
+    autopct="%1.1f%%",
+    startangle=140,
+    colors=["#4caf50", "#f44336"],
+)
+plot111.set_title("Data to Errors Ratio (centralized)")
+
+fig1111 = Figure(figsize=(2, 5), dpi=80)
+plot1111 = fig1111.add_subplot(1, 1, 1)
+plot1111.pie(
+    [100, 0],
+    labels=["Total Data Acquired", "Errors"],
+    autopct="%1.1f%%",
+    startangle=140,
+    colors=["#4caf50", "#f44336"],
+)
+plot1111.set_title("Data to Errors Ratio (decentralized)")
+
+add_figure_to_frame(fig111, top_frame2)
+add_figure_to_frame(fig1111, top_frame2)
 
 
 # Line Plot for Average Transaction Entry Time
@@ -212,20 +234,42 @@ timestamps = [0]
 fig2 = Figure(figsize=(13, 5), dpi=80)
 plot2 = fig2.add_subplot(1, 1, 1)
 plot2.plot(timestamps, marker="o", linestyle="-", color="b")
-plot2.set_title("Response Time (ms) for Transaction")
+plot2.set_title("Response Time (ms) for Transaction (centralized)")
 add_figure_to_frame(fig2, top_frame)
+
+timestamps_decentralized = [0]
+fig22 = Figure(figsize=(13, 5), dpi=80)
+plot22 = fig22.add_subplot(1, 1, 1)
+plot22.plot(timestamps_decentralized, marker="o", linestyle="-", color="b")
+plot22.set_title("Response Time (ms) for Transaction (decentralized)")
+
+add_figure_to_frame(fig22, top_frame1)
+
+fig21 = Figure(figsize=(4, 4), dpi=80)
+plot21 = fig21.add_subplot(1, 1, 1)
+plot21.plot(timestamps, marker="o", linestyle="-", color="b")
+plot21.set_title("Response Time (ms) for Transaction (centralized)")
+
+fig221 = Figure(figsize=(4, 4), dpi=80)
+plot221 = fig221.add_subplot(1, 1, 1)
+plot221.plot(timestamps_decentralized, marker="o", linestyle="-", color="b")
+plot221.set_title("Response Time (ms) for Transaction (decentralized)")
+
+add_figure_to_frame(fig21, top_frame2)
+add_figure_to_frame(fig221, top_frame2)
+
 
 # Middle Frame: TPM, Throughput, and Database Size Metrics side by side
 fig3 = Figure(figsize=(17, 5), dpi=80)
 plot3 = fig3.add_subplot(1, 3, 1)
 plot3.plot(tpm_data, marker="o", linestyle="-", color="c")
-plot3.set_title("Transactions Per Minute (TPM)")
+plot3.set_title("TPM (centralized)")
 plot3.set_xlabel("Time (minutes)")
 plot3.set_ylabel("TPM")
 
 plot4 = fig3.add_subplot(1, 3, 2)
 plot4.plot(throughput_data, marker="o", linestyle="-", color="m")
-plot4.set_title("Throughput")
+plot4.set_title("Throughput (centralized)")
 plot4.set_xlabel("Time (minutes)")
 plot4.set_ylabel("Transactions")
 
@@ -236,6 +280,68 @@ plot5.set_title("Database Size Metrics")
 plot5.set_ylabel("MB")
 
 add_figure_to_frame(fig3, middle_frame)
+
+fig33 = Figure(figsize=(17, 5), dpi=80)
+plot33 = fig33.add_subplot(1, 3, 1)
+plot33.plot(tpm_data, marker="o", linestyle="-", color="c")
+plot33.set_title("TPM (decentralized)")
+plot33.set_xlabel("Time (minutes)")
+plot33.set_ylabel("TPM")
+
+plot44 = fig33.add_subplot(1, 3, 2)
+plot44.plot(throughput_data, marker="o", linestyle="-", color="m")
+plot44.set_title("Throughput (decentralized)")
+plot44.set_xlabel("Time (minutes)")
+plot44.set_ylabel("Transactions")
+
+plot55 = fig33.add_subplot(1, 3, 3)
+categories = ["Gas Spent", "Blockchain Ut."]
+plot55.bar(categories, values, color=["red", "red"])
+plot55.set_title("Blockchain Ut Metrics")
+plot55.set_ylabel("ETH")
+
+add_figure_to_frame(fig33, middle_frame1)
+
+fig333 = Figure(figsize=(9, 5), dpi=70)
+plot333 = fig333.add_subplot(1, 3, 1)
+plot333.plot(tpm_data, marker="o", linestyle="-", color="c")
+plot333.set_title("TPM (centralized)")
+plot333.set_xlabel("Time (minutes)")
+plot333.set_ylabel("TPM")
+
+plot444 = fig333.add_subplot(1, 3, 2)
+plot444.plot(throughput_data, marker="o", linestyle="-", color="m")
+plot444.set_title("Throughput (centralized)")
+plot444.set_xlabel("Time (minutes)")
+plot444.set_ylabel("Transactions")
+
+plot555 = fig333.add_subplot(1, 3, 3)
+categories = ["Memory Ut.", "Disk Ut."]
+plot555.bar(categories, values, color=["red", "red"])
+plot555.set_title("Database Size Metrics")
+plot555.set_ylabel("MB")
+
+fig3333 = Figure(figsize=(9, 5), dpi=70)
+plot3333 = fig3333.add_subplot(1, 3, 1)
+plot3333.plot(tpm_data, marker="o", linestyle="-", color="c")
+plot3333.set_title("TPM (decentralized)")
+plot3333.set_xlabel("Time (minutes)")
+plot3333.set_ylabel("TPM")
+
+plot4444 = fig3333.add_subplot(1, 3, 2)
+plot4444.plot(throughput_data, marker="o", linestyle="-", color="m")
+plot4444.set_title("Throughput (decetralized)")
+plot4444.set_xlabel("Time (minutes)")
+plot4444.set_ylabel("Transactions")
+
+plot5555 = fig3333.add_subplot(1, 3, 3)
+categories = ["Gas Spent", "Blockchain Ut."]
+plot5555.bar(categories, values, color=["red", "red"])
+plot5555.set_title("Blockchain Ut Metrics")
+plot5555.set_ylabel("ETH")
+
+add_figure_to_frame(fig333, middle_frame2)
+add_figure_to_frame(fig3333, middle_frame2)
 
 
 def get_transaction_metrics():
