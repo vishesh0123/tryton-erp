@@ -3,6 +3,11 @@ from decimal import Decimal
 import time
 import psycopg2
 from dbconf import DB_NAME, DB_USER, DB_PASS, DB_HOST, DB_PORT
+from datetime import datetime
+
+response_time = 0
+tpm = 0
+total_time = 0
 
 
 def connect_db():
@@ -13,7 +18,8 @@ def connect_db():
     except Exception as e:
         print(f"Error connecting to the database: {e}")
         return None
-    
+
+
 def reset_statistics(connection):
     try:
         cursor = connection.cursor()
@@ -24,13 +30,16 @@ def reset_statistics(connection):
     except Exception as e:
         print(f"Error resetting statistics: {e}")
 
+
 conn = connect_db()
-reset_statistics(conn)
+# reset_statistics(conn)
+
+
 def insert_data_into_table(transaction_status, time_duration):
     try:
         cursor = conn.cursor()
         # Prepare SQL query to INSERT a record into the database.
-        insert_query = '''INSERT INTO db_metrics_tryton (transaction_status, time_duration) VALUES (%s, %s)'''
+        insert_query = """INSERT INTO db_metrics_tryton (transaction_status, time_duration) VALUES (%s, %s)"""
         record_to_insert = (transaction_status, time_duration)
         cursor.execute(insert_query, record_to_insert)
         conn.commit()
@@ -73,6 +82,7 @@ def setup_parties(parties):
 
 
 def setup_currencies(currency_list):
+    global response_time
     Currency = Model.get("currency.currency")
 
     for currency_data in currency_list:
@@ -94,16 +104,16 @@ def setup_currencies(currency_list):
 
         currency.active = True
         try:
-            start_time = time.time()
+            start_time = datetime.now()
             currency.save()
-            end_time = time.time()
-            duration = end_time - start_time
-            insert_data_into_table(True, duration)
+            end_time = datetime.now()
+            duration = (end_time - start_time).total_seconds() * 1000
+            response_time = float(duration)
+            
         except Exception as e:
             print(f"Error saving party: {e}")
             insert_data_into_table(False, 0)
             continue
-        
 
         print(f"Currency {currency.name} processed successfully with ID {currency.id}")
 
@@ -165,7 +175,7 @@ def setup_countries(contries_data):
             print(f"Error saving party: {e}")
             insert_data_into_table(False, 0)
             continue
-       
+
         print(f"Added country: {country_data['name']}")
 
 
@@ -188,7 +198,7 @@ def setup_product_uom_categories():
     except Exception as e:
         print(f"Error saving party: {e}")
         insert_data_into_table(False, 0)
-    
+
     print("Added UOM category: Area")
 
 
@@ -219,7 +229,7 @@ def setup_product_template():
     except Exception as e:
         print(f"Error saving party: {e}")
         insert_data_into_table(False, 0)
-    
+
     print("Added product template: Chocolate Bar")
 
 
@@ -242,7 +252,7 @@ def setup_products(products):
             product.description = product_data["description"]
             product.suffix_code = product_data["suffix_code"]
             product.active = True
-        
+
         try:
             start_time = time.time()
             product.save()
@@ -399,22 +409,34 @@ products = [
 
 
 def setup_all():
+    global tpm, total_time
     config.set_trytond(database=DB_NAME, config_file="trytond.conf")
     """
     Function to setup parties, currencies, companies, countries, product uom categories, product templates, and products.
     """
-    while True:
-        try:
-            setup_parties(party_data)
-            setup_currencies(currencies_to_setup)
-            setup_companies(companies_data)
-            setup_countries(countries_data)
-            setup_product_uom_categories()
-            setup_product_template()
-            setup_products(products)
-        except Exception as e:
-            print(f"Error setting up data: {e}")
-            continue
+    try:
+        start_time = datetime.now()
+        setup_parties(party_data)
+        setup_currencies(currencies_to_setup)
+        setup_companies(companies_data)
+        setup_countries(countries_data)
+        setup_product_uom_categories()
+        setup_product_template()
+        setup_products(products)
+        end_time = datetime.now()
+        tpm = 22 * 60 / (end_time - start_time).total_seconds()
+        total_time = (end_time - start_time).total_seconds()
+    except Exception as e:
+        print(f"Error setting up data: {e}")
 
+def get_response_time_cen():
+    global response_time
+    return response_time
 
-setup_all()
+def get_tpm_cen():
+    global tpm
+    return tpm
+
+def get_total_time_cen():
+    global total_time
+    return total_time

@@ -5,6 +5,19 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import psycopg2
 from dbconf import DB_NAME, DB_USER, DB_PASS, DB_HOST, DB_PORT
 import re
+from automate_decentralised import (
+    automate_inventory,
+    get_response_time,
+    get_tpm,
+    get_total_time,
+    get_gas_spent,
+)
+from automate_inventory import (
+    setup_all,
+    get_response_time_cen,
+    get_tpm_cen,
+    get_total_time_cen,
+)
 
 
 def connect_db():
@@ -79,9 +92,12 @@ total_allocated_db_size_gb = 200 / 1024
 db_size_gb = int(db_size_bytes.split()[0])
 free_memory_gb = total_allocated_db_size_gb - db_size_gb
 values = [db_size_gb, free_memory_gb]
+values_decentralized = [0, 0]
 
 tpm_data = [0]
+tpm_data_decentralized = [0]
 throughput_data = [0]
+throughput_data_decentralized = [0]
 
 # Main window setup
 root = tk.Tk()
@@ -283,20 +299,20 @@ add_figure_to_frame(fig3, middle_frame)
 
 fig33 = Figure(figsize=(17, 5), dpi=80)
 plot33 = fig33.add_subplot(1, 3, 1)
-plot33.plot(tpm_data, marker="o", linestyle="-", color="c")
+plot33.plot(tpm_data_decentralized, marker="o", linestyle="-", color="c")
 plot33.set_title("TPM (decentralized)")
 plot33.set_xlabel("Time (minutes)")
 plot33.set_ylabel("TPM")
 
 plot44 = fig33.add_subplot(1, 3, 2)
-plot44.plot(throughput_data, marker="o", linestyle="-", color="m")
+plot44.plot(throughput_data_decentralized, marker="o", linestyle="-", color="m")
 plot44.set_title("Throughput (decentralized)")
 plot44.set_xlabel("Time (minutes)")
 plot44.set_ylabel("Transactions")
 
 plot55 = fig33.add_subplot(1, 3, 3)
-categories = ["Gas Spent", "Blockchain Ut."]
-plot55.bar(categories, values, color=["red", "red"])
+categories_decentralised = ["Gas Spent", "Blockchain Ut."]
+plot55.bar(categories_decentralised, values_decentralized, color=["red", "red"])
 plot55.set_title("Blockchain Ut Metrics")
 plot55.set_ylabel("ETH")
 
@@ -323,20 +339,20 @@ plot555.set_ylabel("MB")
 
 fig3333 = Figure(figsize=(9, 5), dpi=70)
 plot3333 = fig3333.add_subplot(1, 3, 1)
-plot3333.plot(tpm_data, marker="o", linestyle="-", color="c")
+plot3333.plot(tpm_data_decentralized, marker="o", linestyle="-", color="c")
 plot3333.set_title("TPM (decentralized)")
 plot3333.set_xlabel("Time (minutes)")
 plot3333.set_ylabel("TPM")
 
 plot4444 = fig3333.add_subplot(1, 3, 2)
-plot4444.plot(throughput_data, marker="o", linestyle="-", color="m")
+plot4444.plot(throughput_data_decentralized, marker="o", linestyle="-", color="m")
 plot4444.set_title("Throughput (decetralized)")
 plot4444.set_xlabel("Time (minutes)")
 plot4444.set_ylabel("Transactions")
 
 plot5555 = fig3333.add_subplot(1, 3, 3)
-categories = ["Gas Spent", "Blockchain Ut."]
-plot5555.bar(categories, values, color=["red", "red"])
+categories_decentralised = ["Gas Spent", "Blockchain Ut."]
+plot5555.bar(categories_decentralised, values_decentralized, color=["red", "red"])
 plot5555.set_title("Blockchain Ut Metrics")
 plot5555.set_ylabel("ETH")
 
@@ -419,7 +435,6 @@ def refresh_db_transactions_metrics():
                 conn, True
             ) + count_transactions_by_status(conn, False)
             total_errors = count_transactions_by_status(conn, False)
-            avg_time_duration = avg_time_duration_for_true_status(conn)
             conn.close()
         else:
             print(
@@ -429,7 +444,9 @@ def refresh_db_transactions_metrics():
             avg_time_duration = 0
 
         total_data_acquired = total_transactions
-        number_of_errors = total_errors
+        number_of_errors = 0
+        print("total_data_acquired: ", total_data_acquired)
+        print("number_of_errors: ", number_of_errors)
 
         plot1.clear()
         plot1.pie(
@@ -441,18 +458,53 @@ def refresh_db_transactions_metrics():
         )
         plot1.set_title("Data to Errors Ratio (centralized)")
 
-        if len(timestamps) > 10:
+        avg_time_duration = get_response_time_cen()
+
+        if len(timestamps) > 5:
             timestamps.pop(0)
         timestamps.append(avg_time_duration)
+        print("timestamps: ", timestamps)
+
+        response_decentralized = get_response_time()
+        timestamps_decentralized.append(response_decentralized)
+        if len(timestamps_decentralized) > 5:
+            timestamps_decentralized.pop(0)
+        print("timestamps_decentralized: ", timestamps_decentralized)
+
         plot2.clear()
+        plot21.clear()
+        plot22.clear()
+        plot221.clear()
         plot2.plot(timestamps, marker="o", linestyle="-", color="b")
-        plot2.set_title(
-            f"Response  Time for Transactions {round(avg_time_duration * 1000, 8)} ms"
+        plot21.plot(timestamps, marker="o", linestyle="-", color="b")
+        plot22.plot(timestamps_decentralized, marker="o", linestyle="-", color="b")
+        plot221.plot(timestamps_decentralized, marker="o", linestyle="-", color="b")
+        plot2.set_title(f"Response  Time Centralized {round(avg_time_duration, 8)} ms")
+        plot21.set_title(
+            f"Response  Time for Centralized {round(avg_time_duration , 8)} ms"
+        )
+        plot22.set_title(
+            f"Response  Time for Decentralized {round(response_decentralized , 8)} ms"
+        )
+        plot221.set_title(
+            f"Response  Time for Decentralized {round(response_decentralized , 8)} ms"
         )
         plot2.tick_params(
             axis="x", which="both", bottom=False, top=False, labelbottom=False
         )
+        plot21.tick_params(
+            axis="x", which="both", bottom=False, top=False, labelbottom=False
+        )
+        plot22.tick_params(
+            axis="x", which="both", bottom=False, top=False, labelbottom=False
+        )
+        plot221.tick_params(
+            axis="x", which="both", bottom=False, top=False, labelbottom=False
+        )
         fig2.canvas.draw_idle()
+        fig21.canvas.draw_idle()
+        fig22.canvas.draw_idle()
+        fig221.canvas.draw_idle()
 
         # Schedule the next call
         root.after(3000, refresh_db_transactions_metrics)
@@ -482,16 +534,41 @@ def refresh_db_size_metrics():
         free_memory_gb = int(re.match(r"\d+", db_memory_usage).group())
         values = [free_memory_gb, db_size_gb]
 
+        gas_spent = get_gas_spent() / 10**9
+        values_decentralized = [gas_spent, gas_spent]
+
         # Update the figure or metrics here
         # For example, updating a bar chart's values
         # This is a placeholder, replace with actual update logic
         plot5.clear()
+        plot555.clear()
+        plot55.clear()
+        plot5555.clear()
         plot5.bar(categories, values, color=["red", "red"])
+        plot555.bar(categories, values, color=["red", "red"])
         plot5.set_title(
             f"Memory Usage: {free_memory_gb} MB. Disk Usage {db_size_gb} MB,"
         )
+        plot555.set_title(f"Memory: {free_memory_gb} MB. Disk{db_size_gb} MB")
         plot5.set_ylabel("MB")
+        plot555.set_ylabel("MB")
+
+        plot55.bar(categories_decentralised, values_decentralized, color=["red", "red"])
+        plot55.set_title(
+            f"Gas Spent: {round(gas_spent,5)} ETH. Blockchain Ut. {round(gas_spent,5)} ETH,"
+        )
+        plot55.set_ylabel("ETH")
+
+        plot5555.bar(categories_decentralised, values_decentralized, color=["red", "red"])
+        plot5555.set_title(
+            f"Gas Spent: {round(gas_spent,5)} ETH"
+        )
+        plot5555.set_ylabel("ETH")
+
         fig3.canvas.draw_idle()
+        fig333.canvas.draw_idle()
+        fig33.canvas.draw_idle()
+        fig3333.canvas.draw_idle()
 
         # Schedule the next call
         root.after(3000, refresh_db_size_metrics)
@@ -508,6 +585,16 @@ def refresh_transaction_metrics():
         total_transactions = metrics["total_transactions"]
         tpm = metrics["transactions_per_minute"]
 
+        tpm_dec = get_tpm()
+        total_time_dec = get_total_time()
+        res_time_dec = get_response_time()
+        throughput_dec = res_time_dec / total_time_dec
+
+        tpm_cen = get_tpm_cen()
+        total_time_cen = get_total_time_cen()
+        res_time_cen = get_response_time_cen()
+        throughput_cen = res_time_cen / total_time_cen
+
         if tpm is None:
             tpm = 0
         if total_transactions is None:
@@ -517,36 +604,92 @@ def refresh_transaction_metrics():
         # Update the placeholders with the latest metrics
         plot3.clear()
         plot4.clear()
+        plot333.clear()
+        plot444.clear()
+
+        plot33.clear()
+        plot3333.clear()
+        plot44.clear()
+        plot4444.clear()
 
         # You might want to keep a history of TPM and transactions to plot over time
         if len(tpm_data) > 5:
             tpm_data.pop(0)
 
+        if len(tpm_data_decentralized) > 5:
+            tpm_data_decentralized.pop(0)
+
         if len(throughput_data) > 5:
             throughput_data.pop(0)
 
-        tpm_data.append(tpm)
-        throughput_data.append(total_transactions)
+        if len(throughput_data_decentralized) > 5:
+            throughput_data_decentralized.pop(0)
+
+        tpm_data.append(tpm_cen)
+        throughput_data.append(throughput_cen)
+        tpm_data_decentralized.append(tpm_dec)
+        throughput_data_decentralized.append(throughput_dec)
 
         # Redraw the TPM plot
         plot3.plot(tpm_data, marker="o", linestyle="-", color="c")
-        plot3.set_title(f"TPM {round(tpm,2)} transactions per min")
+        plot3.set_title(f"TPM {round(tpm_cen,2)}")
         plot3.set_ylabel("TPM")
         plot3.tick_params(
             axis="x", which="both", bottom=False, top=False, labelbottom=False
         )
 
+        plot333.plot(tpm_data, marker="o", linestyle="-", color="c")
+        plot333.set_title(f"TPM {round(tpm_cen,2)} (Cent.)")
+        plot333.set_ylabel("TPM")
+        plot333.tick_params(
+            axis="x", which="both", bottom=False, top=False, labelbottom=False
+        )
+
         # Redraw the Throughput plot
         plot4.plot(throughput_data, marker="o", linestyle="-", color="m")
-        plot4.set_title(
-            f"Throughput {round(total_transactions,2)} transactions per sec"
-        )
-        plot4.set_ylabel("Transactions Per Second (TPS)")
+        plot4.set_title(f"Throughput {round(throughput_cen,2)}")
         plot4.tick_params(
             axis="x", which="both", bottom=False, top=False, labelbottom=False
         )
 
+        plot444.plot(throughput_data, marker="o", linestyle="-", color="m")
+        plot444.set_title(f"Throughput {round(throughput_cen,2)} (Cent.)")
+        plot444.tick_params(
+            axis="x", which="both", bottom=False, top=False, labelbottom=False
+        )
+
+        plot33.plot(tpm_data_decentralized, marker="o", linestyle="-", color="c")
+        plot33.set_title(f"TPM {round(tpm_dec,2)}")
+        plot33.set_ylabel("TPM")
+        plot33.tick_params(
+            axis="x", which="both", bottom=False, top=False, labelbottom=False
+        )
+
+        plot3333.plot(tpm_data_decentralized, marker="o", linestyle="-", color="c")
+        plot3333.set_title(f"TPM {round(tpm_dec,2)} (decent.)")
+        plot3333.set_ylabel("TPM")
+        plot3333.tick_params(
+            axis="x", which="both", bottom=False, top=False, labelbottom=False
+        )
+
+        plot44.plot(throughput_data_decentralized, marker="o", linestyle="-", color="m")
+        plot44.set_title(f"Throughput {round(throughput_dec,2)}")
+        plot44.tick_params(
+            axis="x", which="both", bottom=False, top=False, labelbottom=False
+        )
+
+        plot4444.plot(
+            throughput_data_decentralized, marker="o", linestyle="-", color="m"
+        )
+        plot4444.set_title(f"Throughput {round(throughput_dec,2)} (decent.)")
+        plot4444.tick_params(
+            axis="x", which="both", bottom=False, top=False, labelbottom=False
+        )
+
         fig3.canvas.draw_idle()
+        fig333.canvas.draw_idle()
+        fig33.canvas.draw_idle()
+        fig3333.canvas.draw_idle()
 
         # Schedule the next call
         root.after(3000, refresh_transaction_metrics)
@@ -569,11 +712,15 @@ def update_timer():
         timer_label2.config(
             text=f"Time Remaining: {experiment_time} seconds (Total Experiment Time 30 sec)"
         )
-        root.after(1000, update_timer)  # schedule next update in 1 second
+        root.after(1000, update_timer)
+        root.after(5000, automate_inventory)
+        root.after(5000, setup_all)
     else:
         print("Experiment finished!")
 
 
+automate_inventory()
+setup_all()
 update_timer()
 refresh_db_size_metrics()
 refresh_transaction_metrics()
