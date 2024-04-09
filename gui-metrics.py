@@ -545,13 +545,13 @@ def refresh_db_size_metrics():
         plot55.clear()
         plot5555.clear()
         plot5.bar(categories, values, color=["red", "red"])
-        # plot555.bar(categories, values, color=["red", "red"])
+        plot555.bar(categories, values, color=["red", "red"])
         plot5.set_title(
             f"Memory Usage: {free_memory_gb} MB. Disk Usage {db_size_gb} MB,"
         )
-        # plot555.set_title(f"Memory: {free_memory_gb} MB. Disk{db_size_gb} MB")
+        plot555.set_title(f"Memory: {free_memory_gb} MB. Disk{db_size_gb} MB")
         plot5.set_ylabel("MB")
-        # plot555.set_ylabel("MB")
+        plot555.set_ylabel("MB")
 
         plot55.bar(categories_decentralised, values_decentralized, color=["red", "red"])
         plot55.set_title(
@@ -559,16 +559,16 @@ def refresh_db_size_metrics():
         )
         plot55.set_ylabel("ETH")
 
-        # plot5555.bar(categories_decentralised, values_decentralized, color=["red", "red"])
-        # plot5555.set_title(
-        #     f"Gas Spent: {round(gas_spent,5)} ETH"
-        # )
-        # plot5555.set_ylabel("ETH")
+        plot5555.bar(categories_decentralised, values_decentralized, color=["red", "red"])
+        plot5555.set_title(
+            f"Gas Spent: {round(gas_spent,5)} ETH"
+        )
+        plot5555.set_ylabel("ETH")
 
         fig3.canvas.draw_idle()
         fig333.canvas.draw_idle()
-        # fig33.canvas.draw_idle()
-        # fig3333.canvas.draw_idle()
+        fig33.canvas.draw_idle()
+        fig3333.canvas.draw_idle()
 
         # Schedule the next call
         root.after(3000, refresh_db_size_metrics)
